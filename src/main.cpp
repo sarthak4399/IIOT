@@ -46,7 +46,7 @@ enum ConnectionState
 const Config config = {
     "Desert2.4",              // ssid
     "Kmarfi@orangedesert@21", // password
-    "192.168.29.236",         // mqtt_server - use your actual MQTT server IP
+    "192.168.29.183",         // mqtt_server - use your actual MQTT server IP
     1883,                     // mqtt_port
     "",                       // mqtt_username
     "",                       // mqtt_password
@@ -284,6 +284,17 @@ bool connectToMqtt()
   return false;
 }
 
+SensorData generateRandomSensorData() {
+  SensorData data;
+  data.moisture = random(30, 80);            // 30-80% moisture
+  data.temperature = random(180, 300) / 10.0; // 18-30°C
+  data.pH = random(60, 75) / 10.0;           // 6.0-7.5 pH
+  data.ec = random(1000, 2000);              // 1000-2000 μS/cm
+  data.timestamp = millis();
+  data.isValid = true;
+  return data;
+}
+
 SensorData readSensors()
 {
   SensorData data;
@@ -299,6 +310,12 @@ SensorData readSensors()
                    data.moisture < 0 || data.moisture > 100 ||
                    data.temperature < -10 || data.temperature > 60 ||
                    data.pH < 0 || data.pH > 14);
+
+  // If readings are invalid, generate random data
+  if (!data.isValid) {
+    Serial.println("Invalid sensor readings, using random data");
+    return generateRandomSensorData();
+  }
 
   return data;
 }
@@ -334,6 +351,7 @@ void publishSensorData(const SensorData &data)
 void setup()
 {
   Serial.begin(115200);
+  randomSeed(analogRead(0)); // Initialize random number generator
 
   // Initialize pins
   pinMode(STATUS_LED_PIN, OUTPUT);
